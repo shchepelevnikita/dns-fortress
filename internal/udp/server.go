@@ -2,8 +2,8 @@ package udp
 
 import (
 	"bytes"
-	"fmt"
 	"io"
+	"log"
 	"net"
 	"net/http"
 )
@@ -22,11 +22,11 @@ func StartUDPServer() {
 	conn, err := net.ListenUDP("udp", addr)
 
 	if err != nil {
-		fmt.Printf("Something went wrong when trying to start a UDP server: %v\n", err)
+		log.Printf("Something went wrong when trying to start a UDP server: %v\n", err)
 		return
 	}
 
-	fmt.Printf("Started a UDP server on %s\n", addr)
+	log.Printf("Started a UDP server on %s\n", addr)
 
 	for {
 		var buf [512]byte
@@ -34,7 +34,7 @@ func StartUDPServer() {
 		_, _, err := conn.ReadFromUDP(buf[0:])
 
 		if err != nil {
-			fmt.Printf("Something went wrong when trying to read from UDP server: %v\n", err)
+			log.Printf("Something went wrong when trying to read from UDP server: %v\n", err)
 			return
 		}
 
@@ -43,7 +43,7 @@ func StartUDPServer() {
 		req, err := http.NewRequest("GET", cloudflareURL+""+domain, nil)
 
 		if err != nil {
-			fmt.Printf("Something went wrong when trying to create GET request for resolving %s with Cloudflare: %v\n", domain, err)
+			log.Printf("Something went wrong when trying to create GET request for resolving %s with Cloudflare: %v\n", domain, err)
 			return
 		}
 
@@ -52,17 +52,17 @@ func StartUDPServer() {
 		res, err := client.Do(req)
 
 		if err != nil {
-			fmt.Printf("Something went wrong when trying to forward domain %s to Cloudflare: %v\n", domain, err)
+			log.Printf("Something went wrong when trying to forward domain %s to Cloudflare: %v\n", domain, err)
 			return
 		}
 
 		resBody, err := io.ReadAll(res.Body)
 
 		if err != nil {
-			fmt.Printf("Something went wrong when trying to read response body: %v\n", err)
+			log.Printf("Something went wrong when trying to read response body: %v\n", err)
 			return
 		}
 
-		fmt.Printf("Response body: %s\nResponse code: %d\n", resBody, res.StatusCode)
+		log.Printf("Response body: %s\nResponse code: %d\n", resBody, res.StatusCode)
 	}
 }
