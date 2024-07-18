@@ -64,12 +64,5 @@ func StartUDPServer() {
 		}
 
 		fmt.Printf("Response body: %s\nResponse code: %d\n", resBody, res.StatusCode)
-
-		//_, err = conn.WriteToUDP([]byte("Hello UDP Client\n"), addr)
-		//
-		//if err != nil {
-		//	fmt.Printf("Something went wrong when trying to send response over UDP server: %v\n", err)
-		//	return
-		//}
 	}
 }
