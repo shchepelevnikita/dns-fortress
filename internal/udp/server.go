@@ -51,6 +51,13 @@ func StartUDPServer() {
 
 		res, err := client.Do(req)
 
+		defer func(Body io.ReadCloser) {
+			err := Body.Close()
+			if err != nil {
+				log.Printf("Couldn't close the response's body %v\n", err)
+			}
+		}(res.Body)
+
 		if err != nil {
 			log.Printf("Something went wrong when trying to forward domain %s to Cloudflare: %v\n", domain, err)
 			return
