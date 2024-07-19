@@ -2,6 +2,7 @@ package udp
 
 import (
 	"bytes"
+	"github.com/spf13/viper"
 	"io"
 	"log"
 	"net"
@@ -9,13 +10,16 @@ import (
 )
 
 func StartUDPServer() {
-	addr := &net.UDPAddr{
-		IP:   net.IPv4(127, 0, 0, 1),
-		Port: 8080,
-		Zone: "",
-	}
 
-	cloudflareURL := "https://1.1.1.1/dns-query?name="
+	ip := viper.GetString("server.ip")
+	port := viper.GetInt("server.port")
+
+	dnsServers := viper.GetStringMapString("dns-servers")
+
+	addr := &net.UDPAddr{
+		IP:   net.ParseIP(ip),
+		Port: port,
+	}
 
 	client := &http.Client{}
 
@@ -40,36 +44,32 @@ func StartUDPServer() {
 
 		domain := string(bytes.Trim(buf[:], "\x00"))
 
-		req, err := http.NewRequest("GET", cloudflareURL+""+domain, nil)
+		for _, dnsServerUrl := range dnsServers {
+			req, err := http.NewRequest("GET", dnsServerUrl+""+domain, nil)
 
-		if err != nil {
-			log.Printf("Something went wrong when trying to create GET request for resolving %s with Cloudflare: %v\n", domain, err)
-			return
-		}
-
-		req.Header.Add("Accept", "application/dns-json")
-
-		res, err := client.Do(req)
-
-		defer func(Body io.ReadCloser) {
-			err := Body.Close()
 			if err != nil {
-				log.Printf("Couldn't close the response's body %v\n", err)
+				log.Printf("Something went wrong when trying to create GET request for resolving %s with %s: %v\n", domain, dnsServerUrl, err)
+				continue
 			}
-		}(res.Body)
 
-		if err != nil {
-			log.Printf("Something went wrong when trying to forward domain %s to Cloudflare: %v\n", domain, err)
-			return
+			req.Header.Add("Accept", "application/dns-json")
+
+			res, err := client.Do(req)
+
+			if err != nil {
+				log.Printf("Something went wrong when trying to forward domain %s to %s: %v\n", domain, dnsServerUrl, err)
+				continue
+			}
+
+			resBody, err := io.ReadAll(res.Body)
+
+			if err != nil {
+				log.Printf("Something went wrong when trying to read response body: %v\n", err)
+				continue
+			}
+
+			log.Printf("Response body: %s\nResponse code: %d\n", resBody, res.StatusCode)
+			break
 		}
-
-		resBody, err := io.ReadAll(res.Body)
-
-		if err != nil {
-			log.Printf("Something went wrong when trying to read response body: %v\n", err)
-			return
-		}
-
-		log.Printf("Response body: %s\nResponse code: %d\n", resBody, res.StatusCode)
 	}
 }

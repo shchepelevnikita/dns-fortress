@@ -1,3 +1,11 @@
+# How to run the project
+
+`go run cmd/resolver/main.go`
+
+# How to send a query over UDP 
+
+`echo -n "hello" > /dev/udp/localhost/8080`
+
 # Project Structure
 
 myproject/
