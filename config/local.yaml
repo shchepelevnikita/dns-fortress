@@ -1,0 +1,7 @@
+server:
+  ip: 127.0.0.1
+  port: 8080
+
+dns-servers:
+  cloudflare: https://1.1.1.1/dns-query?name=
+  google: https://8.8.8.8/resolve?name=
